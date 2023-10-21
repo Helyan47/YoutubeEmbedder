@@ -16,8 +16,30 @@ iframe.style.height = '100%';
 iframe.style.display = 'flex';
 iframe.style.border = 'none';
 
+const baseUrls = [
+	{
+		urlTemplate: 'playlist?list=', // playlist
+		baseUrl: 'https://www.youtube.com/embed?listType=playlist&amp;list=',
+		validator: (url) => {
+			return url.includes('playlist?list=');
+		},
+		replacer: (url) => {
+			return url.split('playlist?list=')[1];
+		},
+	},
+	{
+		urlTemplate: 'watch?v=', // video
+		baseUrl: 'https://www.youtube.com/embed/',
+		validator: (url) => {
+			return url.includes('watch?v=');
+		},
+		replacer: (url) => {
+			return url.split('watch?v=')[1];
+		},
+	},
+];
+
 iframe.onload = function () {
-	console.log('iframe loaded');
 	iframe.contentWindow?.document?.body?.querySelector('#movie_player video').play();
 	iframe.contentWindow?.document?.body?.querySelector('#movie_player video').focus();
 };
@@ -29,13 +51,23 @@ function parseUrl(url) {
 	if (!url) {
 		return '';
 	}
-	if (url.includes('list=')) {
-		return `https://www.youtube.com/embed?listType=playlist&amp;list=${
-			url.split('list=')[1]
-		}?autoplay=1`;
+	const urlResult = baseUrls
+		.map((baseUrl) => {
+			if (baseUrl.validator(url)) {
+				return `${baseUrl.baseUrl}${baseUrl.replacer(url)}?autoplay=1`;
+			}
+		})
+		.filter((url) => url !== undefined);
+	if (urlResult.length > 0) {
+		return urlResult[0];
 	}
-	const videoId = url.split('v=')[1];
-	return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+	// if (url.includes('list=')) {
+	// 	return `https://www.youtube.com/embed?listType=playlist&amp;list=${
+	// 		url.split('list=')[1]
+	// 	}?autoplay=1`;
+	// }
+	// const videoId = url.split('v=')[1];
+	// return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
 }
 
 function appendIframe() {
@@ -51,18 +83,25 @@ function resetIframe() {
 }
 
 function validateCurrentUrl() {
-	var currentWatch =
-		window.location.href.includes('playlist') || window.location.href.includes('watch');
-	var pastWatch = currentUrl.includes('playlist') || currentUrl.includes('watch');
-	if (
-		currentWatch &&
-		pastWatch &&
-		window.location.href.includes(currentUrl.split('youtube.com/')[1])
-	) {
-		return;
-	} else if (currentWatch && pastWatch) {
-		resetIframe();
-	}
+	var currentWatch = false;
+	var pastWatch = false;
+	baseUrls.forEach((baseUrl) => {
+		if (baseUrl.validator(window.location.href)) {
+			currentWatch = true;
+		}
+		if (baseUrl.validator(currentUrl)) {
+			pastWatch = true;
+		}
+		if (
+			currentWatch &&
+			pastWatch &&
+			window.location.href.includes(currentUrl.split('youtube.com/')[1])
+		) {
+			return;
+		} else if (currentWatch && pastWatch) {
+			resetIframe();
+		}
+	});
 	if (!currentWatch) {
 		onHome = true;
 	} else {
