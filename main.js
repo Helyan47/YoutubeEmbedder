@@ -18,23 +18,23 @@ iframe.style.border = 'none';
 
 const baseUrls = [
 	{
-		urlTemplate: 'playlist?list=', // playlist
+		id: 'list',
 		baseUrl: 'https://www.youtube.com/embed?listType=playlist&amp;list=',
 		validator: (url) => {
-			return url.includes('playlist?list=');
+			return url.match(/[?&]list=([a-zA-Z0-9_-]+)/) !== null;
 		},
 		replacer: (url) => {
-			return url.split('playlist?list=')[1];
+			return url.match(/[?&]list=([a-zA-Z0-9_-]+)/)[1];
 		},
 	},
 	{
-		urlTemplate: 'watch?v=', // video
+		id: 'simpleVideo',
 		baseUrl: 'https://www.youtube.com/embed/',
 		validator: (url) => {
-			return url.includes('watch?v=');
+			return url.match(/[?&]v=([a-zA-Z0-9_-]+)/) !== null;
 		},
 		replacer: (url) => {
-			return url.split('watch?v=')[1];
+			return url.match(/[?&]v=([a-zA-Z0-9_-]+)/)[1];
 		},
 	},
 ];
